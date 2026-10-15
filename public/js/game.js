@@ -513,7 +513,7 @@
   }
 
   function drawTitlePage(now) {
-    S.text(ctx, "Pen Golf", 520, 130, { size: 96, font: "'Rock Salt', cursive", weight: 400, tilt: -4 });
+    S.text(ctx, "Doodle Golf", 520, 130, { size: 96, font: "'Rock Salt', cursive", weight: 400, tilt: -4 });
     S.text(ctx, "mini golf on your notebook, with traps for your friends", 520, 218, { size: 30, color: "#5d5960" });
     // a little golfer taking a swing every couple of seconds
     const t = (now % 2400);

@@ -1,4 +1,4 @@
-# Pen Golf ⛳✏️
+# Doodle Golf ⛳✏️
 
 An online party game: mini golf on notebook pages, where every player sabotages the course with hand-drawn traps.
 Inspired by Ultimate Chicken Horse. By **Alfie Radcliffe**. All the art will be drawn by hand on paper and scanned in.
