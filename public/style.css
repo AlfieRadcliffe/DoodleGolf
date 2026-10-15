@@ -1,0 +1,88 @@
+/* Pen Golf: notebook look, matching Alfie's portfolio */
+:root {
+  --ink: #262123; --pencil: #5d5960; --paper: #fdfbf3; --desk: #e9e1cf;
+  --red: #d63b3b; --yellow: #fff06a; --pink: #ffc9de; --blue: #cfe6ff; --tape: rgba(246, 226, 160, .8);
+  --wobbly: 255px 15px 225px 15px / 15px 225px 15px 255px;
+  --hand: "Caveat", "Patrick Hand", cursive; --note: "Gaegu", "Patrick Hand", cursive;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { min-height: 100vh; color: var(--ink); font: 19px/1.45 "Patrick Hand", cursive;
+  background: var(--desk) radial-gradient(rgba(0,0,0,.04) 1px, transparent 1px) 0 0 / 6px 6px; }
+
+header { display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap; padding: 14px 24px 4px; max-width: 1340px; margin: 0 auto; }
+h1 { font: 400 34px "Rock Salt", cursive; transform: rotate(-2deg); }
+#hole-name { font: 700 26px var(--hand); color: var(--pencil); }
+
+main { display: grid; grid-template-columns: 1fr 230px; gap: 22px; padding: 10px 24px 30px; max-width: 1340px; margin: 0 auto; align-items: start; }
+@media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+
+.board { min-width: 0; }
+.stage { position: relative; }
+canvas#course { display: block; width: 100%; height: auto; background: var(--paper); box-shadow: 0 2px 4px rgba(0,0,0,.08), 4px 10px 22px rgba(60,40,20,.18);
+  cursor: crosshair; touch-action: none; transform: rotate(-.3deg); }
+.status { font: 21px var(--note); margin: 12px 4px 0; min-height: 1.5em; }
+.status kbd { font: 15px monospace; border: 1.5px solid var(--ink); border-radius: 4px; padding: 0 5px; background: #fff; }
+
+/* Sticky-note panels floating over the course */
+.panel { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(-1deg); z-index: 3; max-width: calc(100% - 20px); }
+.note { background: #fff38f; padding: 26px 30px 24px; box-shadow: 3px 8px 18px rgba(60,40,20,.25); width: 460px; }
+.note.pink { background: var(--pink); } .note.blue { background: var(--blue); }
+.note::before { content: ""; position: absolute; top: -12px; left: 50%; width: 96px; height: 26px; margin-left: -48px; background: var(--tape); transform: rotate(-3deg); }
+.panel h2 { font: 700 38px/1.05 var(--hand); margin-bottom: 6px; }
+.sub { font: 21px var(--note); color: var(--pencil); margin-bottom: 10px; }
+
+.count { display: flex; gap: 8px; margin-bottom: 12px; }
+.count button { font: 700 24px var(--hand); width: 46px; height: 42px; background: #fff; border: 2.5px solid var(--ink); border-radius: var(--wobbly); cursor: pointer; }
+.count button.on { background: var(--ink); color: var(--yellow); }
+.names { display: grid; gap: 8px; margin-bottom: 16px; }
+.names label { display: flex; align-items: center; gap: 10px; }
+.names input { flex: 1; font: 22px var(--note); padding: 2px 10px; background: rgba(255,255,255,.7); border: 0; border-bottom: 2.5px solid var(--ink); outline: 0; }
+.dot { display: inline-block; width: 16px; height: 16px; border-radius: 50% 45% 55% 40%; border: 2px solid var(--ink); flex: none; vertical-align: -2px; margin-right: 6px; }
+
+.btn { font: 700 26px var(--hand); padding: 6px 20px 8px; background: #fff; border: 2.5px solid var(--ink); border-radius: var(--wobbly); box-shadow: 3px 3px 0 var(--ink); cursor: pointer; }
+.btn.yellow { background: var(--yellow); }
+.btn:hover { transform: rotate(-2deg) translate(-1px, -2px); }
+.btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+
+.rules { margin-top: 16px; font-size: 18px; }
+.rules summary { font: 700 22px var(--hand); cursor: pointer; }
+.rules ol { padding-left: 22px; margin-top: 6px; }
+
+/* Trap cards */
+#panel-cards { width: min(720px, calc(100% - 20px)); text-align: center; }
+#panel-cards h2 { background: rgba(253,251,243,.92); display: inline-block; padding: 2px 14px; margin-bottom: 14px; }
+.cards { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; }
+.card { width: 190px; padding: 18px 12px 14px; background: #fffefa; border: 2.5px solid var(--ink); border-radius: var(--wobbly);
+  box-shadow: 4px 6px 0 rgba(38,33,35,.85); cursor: pointer; display: grid; justify-items: center; gap: 2px; transform: rotate(var(--tilt)); font: inherit; color: var(--ink); }
+.card:hover { transform: rotate(0) translateY(-6px) scale(1.04); background: #fffbe0; }
+.card canvas { width: 150px; height: 110px; }
+.card b { font: 700 26px var(--hand); }
+.card small { font: 18px var(--note); color: var(--pencil); line-height: 1.15; }
+
+/* Scores */
+.scores { width: 100%; border-collapse: collapse; margin: 6px 0 18px; font-size: 21px; }
+.scores td { padding: 4px 4px; border-bottom: 2px dotted rgba(38,33,35,.25); }
+.scores .gain { color: var(--red); font-family: var(--note); }
+.scores .pts { text-align: right; font: 700 28px var(--hand); }
+
+.toast { position: absolute; left: 50%; top: 14px; transform: translateX(-50%) rotate(-1.5deg); z-index: 4; pointer-events: none;
+  font: 700 30px var(--hand); background: #fffefa; border: 2.5px solid var(--ink); border-radius: var(--wobbly); padding: 2px 18px 4px; box-shadow: 3px 3px 0 rgba(38,33,35,.3); }
+
+/* Scoreboard sticky note */
+.side { position: relative; width: auto; transform: rotate(1.2deg); padding: 24px 20px 18px; }
+.side h3 { font: 700 30px var(--hand); margin-bottom: 4px; }
+.players { list-style: none; display: grid; gap: 6px; }
+.players li { display: flex; align-items: center; gap: 6px; padding: 2px 6px; border-radius: 6px; }
+.players li.active { background: rgba(255,255,255,.7); outline: 2px dashed var(--ink); }
+.players .nm { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.players .st { font: 17px var(--note); color: var(--pencil); }
+.players b { font: 700 26px var(--hand); min-width: 26px; text-align: right; }
+.tip { font: 18px var(--note); color: var(--pencil); margin-top: 8px; }
+
+/* Phones: menus sit below the course instead of covering it */
+@media (max-width: 700px) {
+  header, main { padding-left: 12px; padding-right: 12px; }
+  .panel { position: relative; left: auto; top: auto; transform: rotate(-.6deg); margin: 18px auto 0; width: auto; }
+  .card { width: 150px; } .card canvas { width: 120px; height: 88px; }
+  .toast { font-size: 22px; }
+}

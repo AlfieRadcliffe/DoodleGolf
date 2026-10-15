@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pen Golf</title>
+<meta name="description" content="Pen Golf: mini golf on notebook pages, where every player sabotages the course with hand-drawn traps.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cellipse cx='26' cy='54' rx='14' ry='5' fill='%23262123'/%3E%3Cpath d='M26 54 L27 8' stroke='%23262123' stroke-width='4' stroke-linecap='round'/%3E%3Cpath d='M27 9 L56 18 L27 28 Z' fill='%23ff8f8f' stroke='%23262123' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rock+Salt&family=Caveat:wght@500;700&family=Patrick+Hand&family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Pen Golf</h1>
+    <span id="hole-name"></span>
+  </header>
+
+  <main>
+    <div class="board">
+      <div class="stage">
+        <canvas id="course" width="1000" height="620" aria-label="Golf course drawn on notebook paper"></canvas>
+        <div id="toast" class="toast" hidden></div>
+
+        <!-- Setup -->
+        <section id="panel-setup" class="panel note">
+          <h2>New game</h2>
+          <p class="sub">How many players? (pass the mouse around)</p>
+          <div id="count" class="count"><button>2</button><button>3</button><button>4</button><button>5</button><button>6</button></div>
+          <div id="names" class="names"></div>
+          <button id="start" class="btn yellow">tee off →</button>
+          <details class="rules">
+            <summary>how to play</summary>
+            <ol>
+              <li>Before each hole, everyone picks a trap and places it on the page.</li>
+              <li>Take turns putting: drag back from anywhere and let go. You get 4 strokes.</li>
+              <li>Sink it for <b>3 points</b> + 1 per stroke left. But if <b>everyone</b> sinks it, nobody scores!</li>
+              <li>Your trap stops someone? <b>+1</b> for you. First to 15 wins.</li>
+            </ol>
+          </details>
+        </section>
+
+        <!-- Trap cards -->
+        <section id="panel-cards" class="panel" hidden>
+          <h2 id="cards-title"></h2>
+          <div id="cards" class="cards"></div>
+        </section>
+
+        <!-- Hole scores -->
+        <section id="panel-scores" class="panel note" hidden>
+          <h2 id="scores-title"></h2>
+          <table id="scores-table" class="scores"></table>
+          <button id="next-hole" class="btn yellow">next hole →</button>
+        </section>
+
+        <!-- Winner -->
+        <section id="panel-win" class="panel note pink" hidden>
+          <h2 id="win-title"></h2>
+          <p id="win-sub" class="sub"></p>
+          <table id="win-table" class="scores"></table>
+          <button id="again" class="btn yellow">play again</button>
+        </section>
+      </div>
+      <p id="status" class="status"></p>
+    </div>
+
+    <aside class="side note blue">
+      <h3>scores</h3>
+      <ul id="players" class="players"></ul>
+      <p class="tip">first to 15 wins</p>
+    </aside>
+  </main>
+
+  <script src="js/sketch.js"></script>
+  <script src="js/physics.js"></script>
+  <script src="js/traps.js"></script>
+  <script src="js/levels.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>

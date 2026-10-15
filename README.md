@@ -1,9 +1,9 @@
 # Pen Golf ⛳✏️
 
 An online party game: mini golf on notebook pages, where every player sabotages the course with hand-drawn traps.
-Inspired by Ultimate Chicken Horse. Made by **Alfie Radcliffe**: code, game design and all the art (drawn on paper, scanned in).
+Inspired by Ultimate Chicken Horse. By **Alfie Radcliffe**. All the art will be drawn by hand on paper and scanned in.
 
-> Status: early development. See the milestones below.
+> Status: **playable pass-and-play prototype** (2–6 players on one device, 5 holes, 5 traps). Online multiplayer is next.
 
 ## The rules (first draft, to be changed by playtesting)
 
@@ -35,12 +35,12 @@ First to **15 points** wins.
 ## Milestones
 
 - [x] Pick the game idea and sketch the rules
-- [ ] **1. Single player:** a ball on a canvas you can drag to putt, with friction and wall bounces
-- [ ] **2. Courses:** walls and a hole loaded from a level file; sinking the ball
-- [ ] **3. Traps:** place traps and make them affect the ball
+- [x] **1. Single player:** a ball on a canvas you can drag to putt, with friction and wall bounces
+- [x] **2. Courses:** walls and a hole loaded from a level file; sinking the ball
+- [x] **3. Traps:** place traps and make them affect the ball
 - [ ] **4. Lobby:** a Node.js server; create a room, share a code, see who's joined
 - [ ] **5. Multiplayer:** turns and shots synced between everyone's browsers over WebSockets
-- [ ] **6. Rounds and scoring:** trap phase → putt phase → scores → next hole → winner
+- [x] **6. Rounds and scoring:** trap phase → putt phase → scores → next hole → winner
 - [ ] **7. Art:** hand-drawn sprites and pages scanned in, with a choppy hand-drawn animation style
 - [ ] **8. Playtest and deploy:** play with friends, fix what confuses people, put it online
 
@@ -50,7 +50,7 @@ First to **15 points** wins.
 pen-golf/
   public/            ← everything the browser loads
     index.html
-    game.js          ← the game loop, drawing and physics
+    js/              ← sketch.js (hand-drawn drawing), physics.js, traps.js, levels.js, game.js
     art/             ← scanned black-and-white drawings
   server/            ← added at milestone 4: the Node.js multiplayer server
 ```
@@ -60,4 +60,7 @@ networking is written (and understood) by hand.
 
 ## Running it
 
-Until milestone 4 there's no server: open `public/index.html` in a browser.
+Until milestone 4 there's no server: open `public/index.html` in a browser and pass the mouse around.
+Add `?demo` to the URL to jump straight to a mid-game scene.
+
+All art is placeholder doodles drawn in code (`public/js/sketch.js`, `traps.js`) until it's replaced with scanned drawings.
