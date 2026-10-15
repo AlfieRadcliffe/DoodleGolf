@@ -79,6 +79,29 @@ canvas#course { display: block; width: 100%; height: auto; background: var(--pap
 .players b { font: 700 26px var(--hand); min-width: 26px; text-align: right; }
 .tip { font: 18px var(--note); color: var(--pencil); margin-top: 8px; }
 
+/* Rarity tags on trap cards, as highlighter swipes */
+.rarity { font: 700 17px var(--note); padding: 0 8px; margin-bottom: -2px; transform: rotate(-2deg); }
+.rarity.common { color: var(--pencil); }
+.rarity.uncommon { background: linear-gradient(100deg, transparent 3%, #b9dcff 6%, #b9dcff 94%, transparent 97%); }
+.rarity.rare { background: linear-gradient(100deg, transparent 3%, #ffb7d5 6%, #ffb7d5 94%, transparent 97%); color: var(--red); }
+
+/* Character creator */
+.creator { width: min(660px, calc(100% - 20px)); }
+.creator .step { font: 18px var(--note); color: var(--pencil); }
+.create-body { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+#preview { width: 200px; height: 217px; border: 2.5px solid var(--ink); border-radius: var(--wobbly); background: var(--paper); flex: none; }
+.rows { display: grid; gap: 6px; }
+.row { display: grid; grid-template-columns: 82px 34px 1fr 34px; align-items: center; gap: 6px; }
+.row .lbl { font: 700 21px var(--hand); color: var(--pencil); }
+.row .val { font: 21px var(--note); text-align: center; background: linear-gradient(100deg, transparent 3%, rgba(255,255,255,.75) 6%, rgba(255,255,255,.75) 94%, transparent 97%); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.arrow { font: 16px/1 sans-serif; width: 34px; height: 30px; background: #fff; border: 2.2px solid var(--ink); border-radius: var(--wobbly); cursor: pointer; }
+.arrow:hover { background: var(--ink); color: var(--yellow); }
+.club-desc { font: 19px var(--note); color: var(--red); margin: 6px 0 0; min-height: 2.6em; }
+.create-btns { display: flex; gap: 10px; margin-top: 10px; }
+.create-btns .btn { font-size: 22px; }
+
+.players canvas.face { width: 40px; height: 40px; flex: none; margin: -4px 0; }
+
 /* Phones: menus sit below the course instead of covering it */
 @media (max-width: 700px) {
   header, main { padding-left: 12px; padding-right: 12px; }

@@ -29,7 +29,9 @@
           <p class="sub">How many players? (pass the mouse around)</p>
           <div id="count" class="count"><button>2</button><button>3</button><button>4</button><button>5</button><button>6</button></div>
           <div id="names" class="names"></div>
-          <button id="start" class="btn yellow">tee off →</button>
+          <p class="sub">How many holes?</p>
+          <div id="holes" class="count"><button class="on">5</button><button>7</button><button>10</button></div>
+          <button id="start" class="btn yellow">make your golfers →</button>
           <details class="rules">
             <summary>how to play</summary>
             <ol>
@@ -39,6 +41,22 @@
               <li>Your trap stops someone? <b>+1</b> for you. First to 15 wins.</li>
             </ol>
           </details>
+        </section>
+
+        <!-- Character creator -->
+        <section id="panel-create" class="panel note creator" hidden>
+          <span id="create-step" class="step"></span>
+          <h2 id="create-title"></h2>
+          <div class="create-body">
+            <canvas id="preview" width="240" height="260" aria-label="Your golfer"></canvas>
+            <div>
+              <div id="create-rows" class="rows"></div>
+              <div class="create-btns">
+                <button id="create-random" class="btn">🎲 random</button>
+                <button id="create-done" class="btn yellow">next →</button>
+              </div>
+            </div>
+          </div>
         </section>
 
         <!-- Trap cards -->
@@ -73,6 +91,8 @@
   </main>
 
   <script src="js/sketch.js"></script>
+  <script src="js/clubs.js"></script>
+  <script src="js/character.js"></script>
   <script src="js/physics.js"></script>
   <script src="js/traps.js"></script>
   <script src="js/levels.js"></script>
