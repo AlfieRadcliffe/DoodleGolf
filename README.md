@@ -4,22 +4,34 @@ An online party game: mini golf on notebook pages, where every player sabotages 
 Inspired by Ultimate Chicken Horse. By **Alfie Radcliffe**. All the art will be drawn by hand on paper and scanned in.
 
 > Status: **playable pass-and-play prototype**: 2–6 players on one device, a character creator, 6 clubs,
-> 10 holes and 10 traps. Online multiplayer is next.
+> 10 pages, 10 traps and bombs. Online multiplayer is next.
 
 ## How a game goes
 
-1. **Set up:** choose 2–6 players and 5, 7 or 10 holes.
+1. **Set up:** choose 2–6 players and the points target (15, 25 or 40).
 2. **Make your golfer:** each player uses the arrows to pick a hair/hat, face, shirt and trousers
    (tinted in their pen colour), plus a **club**. Every club has its own ability.
-3. **Each hole:**
-   1. **Trap phase.** Everyone is dealt 3 traps, picks one and places it on the page. Some traps rotate (<kbd>R</kbd> or right-click).
-   2. **Putt phase.** Take turns, one stroke at a time, **4 strokes max** each. Drag back from anywhere and let go,
-      like a slingshot. Your golfer swings the club for you.
+3. **Pages and rounds.** You play the same page for several rounds, and **traps stay on the page**, so it gets
+   harder every round. Each round:
+   1. **Trap phase.** Everyone is dealt 3 items, picks one and places it. Some rotate (<kbd>R</kbd> or right-click).
+      Can't fit it anywhere? Hit **skip**.
+   2. **Putt phase.** Everyone starts from the tee. Take turns, one stroke at a time, **4 strokes max** each.
+      Drag back from anywhere and let go, like a slingshot. Your golfer swings the club for you.
    3. **Scoring.**
       - Sink the ball → **+3**, plus **+1** for each stroke you had left.
-      - **If everyone sinks it, nobody scores.** The hole was too easy, so make your traps meaner.
+      - **Fewest shots** → **+2** for whoever sank it in the fewest strokes (ties share it).
+      - **If everyone sinks it, the sink points don't count.** The page was too easy, so make your traps meaner.
+        (Beating someone's stroke count still earns **+1**.)
       - Your trap touches someone who then misses → **+1** for you.
-4. First to **15 points**, or the most points after the last hole, wins.
+4. **When a page gets impossible** (nobody sinks it 2 rounds in a row), or after 6 rounds, it's torn out and you
+   move to a fresh page.
+5. First to the points target wins.
+
+### Bombs
+
+Dealt once there are at least two things on the page. Drop one and everything placed inside the blast circle is
+destroyed (the page's own walls survive), leaving a scorch mark. Great for clearing a path, or for wrecking
+someone else's trap.
 
 ### Clubs
 
@@ -49,7 +61,7 @@ Basic walls are dealt most often; the nastiest gadgets are rare.
 | Scissors | rare | Snip! Touch them and you're back at the tee |
 | Hole punch | rare | Two linked holes: in one, out the other |
 
-### Holes
+### Pages
 
 Warm-up, Snake, Windmill, Funnel, The Box, Two Rooms, Pinball, Spiral, Zig-zag and Double Trouble.
 Windmill and Double Trouble have spinning rulers pinned to the page, like crazy-golf windmills.

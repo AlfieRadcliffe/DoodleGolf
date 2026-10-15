@@ -29,16 +29,17 @@
           <p class="sub">How many players? (pass the mouse around)</p>
           <div id="count" class="count"><button>2</button><button>3</button><button>4</button><button>5</button><button>6</button></div>
           <div id="names" class="names"></div>
-          <p class="sub">How many holes?</p>
-          <div id="holes" class="count"><button class="on">5</button><button>7</button><button>10</button></div>
+          <p class="sub">Play to how many points?</p>
+          <div id="target" class="count wide"><button>15</button><button class="on">25</button><button>40</button></div>
           <button id="start" class="btn yellow">make your golfers →</button>
           <details class="rules">
             <summary>how to play</summary>
             <ol>
-              <li>Before each hole, everyone picks a trap and places it on the page.</li>
+              <li>Every round, everyone adds a trap to the page. Traps <b>stay</b> round after round, so the page gets harder and harder.</li>
               <li>Take turns putting: drag back from anywhere and let go. You get 4 strokes.</li>
-              <li>Sink it for <b>3 points</b> + 1 per stroke left. But if <b>everyone</b> sinks it, nobody scores!</li>
-              <li>Your trap stops someone? <b>+1</b> for you. First to 15 wins.</li>
+              <li>Sink it for <b>3 points</b> + 1 per stroke left, and <b>+2</b> if you did it in the fewest shots. But if <b>everyone</b> sinks it, the sink points don't count!</li>
+              <li>Your trap stops someone? <b>+1</b> for you. Bombs blow up anything placed nearby.</li>
+              <li>Nobody makes it two rounds in a row? The page is impossible, so it's torn out for a fresh one.</li>
             </ol>
           </details>
         </section>
@@ -65,11 +66,12 @@
           <div id="cards" class="cards"></div>
         </section>
 
-        <!-- Hole scores -->
+        <!-- Round scores -->
         <section id="panel-scores" class="panel note" hidden>
           <h2 id="scores-title"></h2>
+          <p id="scores-note" class="sub"></p>
           <table id="scores-table" class="scores"></table>
-          <button id="next-hole" class="btn yellow">next hole →</button>
+          <button id="next-hole" class="btn yellow">next round →</button>
         </section>
 
         <!-- Winner -->
@@ -86,7 +88,7 @@
     <aside class="side note blue">
       <h3>scores</h3>
       <ul id="players" class="players"></ul>
-      <p class="tip">first to 15 wins</p>
+      <p class="tip" id="tip">first to 25 wins</p>
     </aside>
   </main>
 

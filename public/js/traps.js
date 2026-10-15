@@ -208,16 +208,43 @@
     },
   };
 
+  /* ---------- items (used up straight away, not placed on the page) ---------- */
+  types.bomb = {
+    name: "Bomb", desc: "Blows up everything placed nearby. Page walls survive.", rarity: "uncommon",
+    isBomb: true, radius: 95,
+    footprint: (t) => [[t.x, t.y, 10]],
+    draw(ctx, t) {
+      const s = S();
+      s.circle(ctx, t.x, t.y + 6, 22, { fill: "#3a3540", width: 3, seed: t.seed });
+      s.circle(ctx, t.x - 7, t.y - 1, 5, { fill: "#fffefa", width: 1, passes: 1, alpha: 0.6, seed: t.seed + 1 });
+      s.line(ctx, t.x + 10, t.y - 12, t.x + 18, t.y - 26, { width: 3, seed: t.seed + 2 });
+      // the fuse spark flickers between two drawings
+      const big = Math.floor(now() * 6) % 2;
+      const r = big ? 8 : 5;
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2 + big;
+        s.line(ctx, t.x + 18, t.y - 26, t.x + 18 + Math.cos(a) * r, t.y - 26 + Math.sin(a) * r, { color: i % 2 ? "#d63b3b" : "#f2c200", width: 2.2, passes: 1, seed: i });
+      }
+    },
+  };
+
   const WEIGHT = { common: 0, uncommon: 0, rare: 0 };
-  const weights = { wall: 30, ruler: 18, ink: 14, eraser: 10, spring: 9, highlighter: 8, coffee: 5, sharpener: 4, scissors: 3, holepunch: 3 };
+  const weights = { wall: 30, ruler: 18, ink: 14, eraser: 10, spring: 9, highlighter: 8, bomb: 9, coffee: 5, sharpener: 4, scissors: 3, holepunch: 3 };
 
   PG.traps = {
     types,
     ids: Object.keys(types),
     weights,
-    /** Deal n different trap types, weighted so walls are common and gadgets are rare. */
-    deal(n, rand) {
-      const pool = Object.keys(types);
+    /** Is this placed item caught in a bomb blast at (x, y)? */
+    inBlast(trap, x, y) {
+      return PG.traps.footprint(trap).some(([fx, fy, fr]) => Math.hypot(fx - x, fy - y) < types.bomb.radius + fr * 0.5);
+    },
+    /**
+     * Deal n different trap types, weighted so walls are common and gadgets are rare.
+     * Bombs are only dealt when there's something on the page worth blowing up.
+     */
+    deal(n, rand, opts = {}) {
+      const pool = Object.keys(types).filter((id) => id !== "bomb" || opts.allowBomb);
       const out = [];
       while (out.length < n && pool.length) {
         const total = pool.reduce((a, id) => a + weights[id], 0);

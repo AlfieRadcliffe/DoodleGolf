@@ -79,6 +79,10 @@ canvas#course { display: block; width: 100%; height: auto; background: var(--pap
 .players b { font: 700 26px var(--hand); min-width: 26px; text-align: right; }
 .tip { font: 18px var(--note); color: var(--pencil); margin-top: 8px; }
 
+.count.wide button { width: 58px; }
+.mini { font: 700 18px var(--hand); padding: 0 10px; margin-left: 6px; background: #fff; border: 2px solid var(--ink); border-radius: var(--wobbly); cursor: pointer; }
+.mini:hover { background: var(--ink); color: var(--yellow); }
+
 /* Rarity tags on trap cards, as highlighter swipes */
 .rarity { font: 700 17px var(--note); padding: 0 8px; margin-bottom: -2px; transform: rotate(-2deg); }
 .rarity.common { color: var(--pencil); }

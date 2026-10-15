@@ -1,14 +1,17 @@
 /* ============================================================
    game.js: the game flow, input and drawing.
 
-   Flow: setup → character creator (one per player) → holes.
-   Phases of a hole:
-     trap-pick   a player chooses 1 of 3 dealt traps
+   Flow: setup → character creator (one per player) → pages.
+   Each page is played for several rounds and the traps pile up,
+   until nobody can finish it (or after MAX_ROUNDS), then a fresh
+   page. First to the points target wins.
+   Phases of a round:
+     trap-pick   a player chooses 1 of 3 dealt items
      trap-place  ...and clicks to place it (R / right-click rotates)
      putt        the current player drags back from anywhere
      swing       their golfer swings the club (a few choppy frames)
      rolling     the ball moves until it stops or drops in
-     hole-end    scores for the hole
+     hole-end    scores for the round
    This version is pass-and-play on one device. Online play will
    send the same actions over the network.
    ============================================================ */
@@ -19,7 +22,8 @@
   const COLORS = ["#2b59c3", "#d63b3b", "#1f8a4c", "#7a3cc2", "#e07a1f", "#d64ba1"];
   const COLOR_NAMES = ["blue", "red", "green", "purple", "orange", "pink"];
   const MAX_STROKES = 4;
-  const WIN_SCORE = 15;
+  const MAX_ROUNDS = 6;   // rounds on one page before it's torn out
+  const DRY_LIMIT = 2;    // nobody sinks it this many rounds in a row = the page is impossible
   const SWING = { back: 150, hit: 270, done: 560 }; // ms timings of the swing animation
   const RARITY_LABEL = { common: "common", uncommon: "uncommon", rare: "★ rare" };
 
@@ -30,9 +34,12 @@
   const g = {
     phase: "setup",
     players: [],
-    holeCount: 5,
-    holeList: [],
-    holeNo: 0,
+    target: 25,        // points to win
+    mapList: [],
+    mapNo: 0,
+    round: 0,
+    dry: 0,            // rounds in a row nobody has sunk it on this page
+    blast: null,       // bomb explosion being animated
     world: null,
     balls: [],
     trapQueue: [],
@@ -57,32 +64,43 @@
   }
 
   function startGame() {
-    g.holeList = L.pick(g.holeCount);
-    g.holeNo = 0;
+    g.mapList = L.pick(L.holes.length); // every page, Warm-up first, the rest shuffled
+    g.mapNo = 0;
     g.players.forEach((p) => (p.score = 0));
-    startHole();
+    $("tip").textContent = `first to ${g.target} wins`;
+    startMap();
   }
 
-  function startHole() {
-    g.world = L.world(g.holeList[g.holeNo]);
+  /** A fresh page. Items placed on it stay there round after round. */
+  function startMap() {
+    g.world = L.world(g.mapList[g.mapNo]);
+    g.world.scorches = [];
+    g.round = 0;
+    g.dry = 0;
+    toast(`Page ${g.mapNo + 1}: ${g.world.name}`);
+    startRound();
+  }
+
+  function startRound() {
+    g.round++;
     g.balls = g.players.map((p, i) => ({
       player: i, x: g.world.tee.x, y: g.world.tee.y, vx: 0, vy: 0,
       sunk: false, strokes: 0, done: false, touched: {},
     }));
-    // A different player goes first each hole
-    const n = g.players.length, first = g.holeNo % n;
+    // A different player goes first each round
+    const n = g.players.length, first = (g.mapNo + g.round) % n;
     g.trapQueue = g.players.map((_, i) => (first + i) % n);
     g.turnOrder = g.trapQueue.slice();
     g.swing = null;
     show(null);
-    toast(`Hole ${g.holeNo + 1}: ${g.world.name}`);
+    if (g.round > 1) toast(`Round ${g.round}: add another trap`);
     nextTrapper();
   }
 
   function nextTrapper() {
     if (!g.trapQueue.length) return startPutting();
     g.trapper = g.trapQueue.shift();
-    g.hand = T.deal(3, Math.random);
+    g.hand = T.deal(3, Math.random, { allowBomb: g.world.traps.length >= 2 });
     g.phase = "trap-pick";
     showCards();
     hud();
@@ -92,23 +110,44 @@
     g.placing = { type, angle: 0, owner: g.trapper, seed: 1 + Math.floor(Math.random() * 9999) };
     g.phase = "trap-place";
     show(null);
-    const p = g.players[g.trapper];
-    status(`<b style="color:${p.color}">${esc(p.name)}</b>: click the page to place your <b>${T.types[type].name.toLowerCase()}</b>` +
-      (T.types[type].rotates ? " · <kbd>R</kbd> or right-click to rotate" : ""));
+    const p = g.players[g.trapper], def = T.types[type];
+    status(`<b style="color:${p.color}">${esc(p.name)}</b>: ` +
+      (def.isBomb ? "click where to drop the <b>bomb</b>. Everything inside the circle gets blown up" : `click the page to place your <b>${def.name.toLowerCase()}</b>`) +
+      (def.rotates ? " · <kbd>R</kbd> or right-click to rotate" : "") +
+      ` · <button type="button" class="mini" id="skip">skip</button>`);
   }
 
   function placeTrap(x, y) {
     const trap = { ...g.placing, x, y };
+    if (T.types[trap.type].isBomb) return dropBomb(x, y);
     if (!L.canPlace(g.world, trap)) { toast("Can't put it there!", 900); return; }
     g.world.traps.push(trap);
     g.placing = null;
     nextTrapper();
   }
 
+  function dropBomb(x, y) {
+    const before = g.world.traps.length;
+    g.world.traps = g.world.traps.filter((t) => !T.inBlast(t, x, y));
+    const destroyed = before - g.world.traps.length;
+    g.world.scorches.push({ x, y, seed: Math.floor(Math.random() * 999) });
+    g.blast = { x, y, start: performance.now() };
+    toast(destroyed ? `BOOM! ${destroyed} thing${destroyed > 1 ? "s" : ""} destroyed` : "BOOM! …it missed everything", 1400);
+    g.placing = null;
+    nextTrapper();
+  }
+
+  function skipPlacing() {
+    if (g.phase !== "trap-place") return;
+    g.placing = null;
+    toast(`${g.players[g.trapper].name} skipped`, 900);
+    nextTrapper();
+  }
+
   function startPutting() {
     g.phase = "putt";
     g.turn = 0;
-    toast("Traps set. Tee off!");
+    if (!g.blast) toast("Traps set. Tee off!"); // don't hide a bomb's "BOOM!" message
     beginTurn();
   }
 
@@ -154,33 +193,47 @@
       const i = (g.turn + k) % n;
       if (!g.balls[g.turnOrder[i]].done) { g.turn = i; return beginTurn(); }
     }
-    endHole();
+    endRound();
   }
 
-  function endHole() {
+  function endRound() {
     g.phase = "hole-end";
     g.swing = null;
     const n = g.players.length;
     const sinkers = g.balls.filter((b) => b.sunk);
     const tooEasy = sinkers.length === n;
-    const gained = g.players.map(() => ({ sink: 0, trap: 0 }));
+    const gained = g.players.map(() => ({ sink: 0, best: 0, trap: 0 }));
     if (!tooEasy) for (const b of sinkers) gained[b.player].sink = 3 + (MAX_STROKES - b.strokes);
+    // Fewest shots bonus: whoever sank it in the fewest strokes (ties share it).
+    // Even in a "too easy" round, beating someone's stroke count is worth +1.
+    if (sinkers.length) {
+      const fewest = Math.min(...sinkers.map((b) => b.strokes));
+      const best = sinkers.filter((b) => b.strokes === fewest);
+      const everyoneTied = tooEasy && best.length === n;
+      if (!everyoneTied) for (const b of best) gained[b.player].best = tooEasy ? 1 : 2;
+    }
     // Trap bonus: +1 to a trap's owner for each other player it touched who then missed
     for (const b of g.balls) {
       if (b.sunk) continue;
       for (const owner of Object.keys(b.touched)) if (+owner !== b.player) gained[owner].trap += 1;
     }
-    g.players.forEach((p, i) => (p.score += gained[i].sink + gained[i].trap));
-    g.lastHole = { gained, tooEasy };
+    g.players.forEach((p, i) => (p.score += gained[i].sink + gained[i].best + gained[i].trap));
+    g.dry = sinkers.length ? 0 : g.dry + 1;
+    const pageDone = g.dry >= DRY_LIMIT || g.round >= MAX_ROUNDS;
+    g.lastHole = { gained, tooEasy, nobody: !sinkers.length, pageDone, impossible: g.dry >= DRY_LIMIT };
     showScores();
     hud();
   }
 
-  function nextHole() {
-    g.holeNo++;
-    const someoneWon = g.players.some((p) => p.score >= WIN_SCORE);
-    if (someoneWon || g.holeNo >= g.holeList.length) return gameOver();
-    startHole();
+  /** After the scores: another round on this page, a fresh page, or the end of the game. */
+  function nextRound() {
+    if (g.players.some((p) => p.score >= g.target)) return gameOver();
+    if (g.lastHole.pageDone) {
+      g.mapNo++;
+      if (g.mapNo >= g.mapList.length) return gameOver();
+      return startMap();
+    }
+    startRound();
   }
 
   function gameOver() {
@@ -212,7 +265,7 @@
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
   function hud() {
-    $("hole-name").textContent = g.world ? `hole ${g.holeNo + 1} of ${g.holeList.length}: ${g.world.name}` : "";
+    $("hole-name").textContent = g.world ? `page ${g.mapNo + 1}: ${g.world.name} · round ${g.round}` : "";
     const active = g.phase === "putt" || g.phase === "rolling" || g.phase === "swing" ? current().player
       : g.phase.startsWith("trap") ? g.trapper : g.phase === "create" ? g.creating : -1;
     $("players").innerHTML = g.players.map((p, i) => {
@@ -266,19 +319,28 @@
   function scoreRows(list, withGained) {
     return list.map(({ p, i }) => {
       const gn = withGained && g.lastHole.gained[i];
-      const parts = gn ? [gn.sink && `+${gn.sink} sunk`, gn.trap && `+${gn.trap} traps`].filter(Boolean).join(", ") || "–" : "";
+      const parts = gn ? [gn.sink && `+${gn.sink} sunk`, gn.best && `+${gn.best} fewest shots`, gn.trap && `+${gn.trap} traps`].filter(Boolean).join(", ") || "–" : "";
       return `<tr><td><span class="dot" style="background:${p.color}"></span>${esc(p.name)}</td>` +
         (withGained ? `<td class="gain">${parts}</td>` : "") + `<td class="pts">${p.score}</td></tr>`;
     }).join("");
   }
 
   function showScores() {
-    $("scores-title").textContent = g.lastHole.tooEasy ? "Too easy! Everyone sank it, so no sink points" : `Hole ${g.holeNo + 1} done`;
+    const lh = g.lastHole;
+    $("scores-title").textContent = lh.tooEasy ? "Too easy! Everyone sank it, so no sink points"
+      : lh.nobody ? "Nobody made it!" : `Round ${g.round} done`;
+    let note = "";
+    if (lh.impossible) note = "This page is impossible now. Tearing it out for a fresh one!";
+    else if (lh.pageDone) note = `That's ${MAX_ROUNDS} rounds on this page. Time for a fresh one!`;
+    else if (lh.nobody) note = "One more round like that and this page gets torn out.";
+    else note = "Same page next round: everyone adds another trap.";
+    $("scores-note").textContent = note;
     $("scores-table").innerHTML = scoreRows(g.players.map((p, i) => ({ p, i })), true);
-    const last = g.holeNo + 1 >= g.holeList.length || g.players.some((p) => p.score >= WIN_SCORE);
-    $("next-hole").textContent = last ? "see who won →" : "next hole →";
+    const won = g.players.some((p) => p.score >= g.target);
+    const last = won || (lh.pageDone && g.mapNo + 1 >= g.mapList.length);
+    $("next-hole").textContent = last ? "see who won →" : lh.pageDone ? "new page →" : "next round →";
     show("panel-scores");
-    status("Scores");
+    status(`Scores · first to ${g.target} wins`);
   }
 
   /* ---------------- Character creator ---------------- */
@@ -345,9 +407,9 @@
     document.querySelectorAll("#count button").forEach((b) => b.classList.toggle("on", +b.textContent === count));
   }
   document.querySelectorAll("#count button").forEach((b) => (b.onclick = () => buildSetup(+b.textContent)));
-  document.querySelectorAll("#holes button").forEach((b) => (b.onclick = () => {
-    g.holeCount = +b.textContent;
-    document.querySelectorAll("#holes button").forEach((x) => x.classList.toggle("on", x === b));
+  document.querySelectorAll("#target button").forEach((b) => (b.onclick = () => {
+    g.target = +b.textContent;
+    document.querySelectorAll("#target button").forEach((x) => x.classList.toggle("on", x === b));
   }));
   $("start").onclick = () => {
     const names = [...$("names").querySelectorAll("input")].map((inp, i) => inp.value.trim() || `${COLOR_NAMES[i][0].toUpperCase()}${COLOR_NAMES[i].slice(1)}`);
@@ -358,7 +420,8 @@
     g.creating++;
     if (g.creating < g.players.length) showCreator(); else startGame();
   };
-  $("next-hole").onclick = nextHole;
+  $("next-hole").onclick = nextRound;
+  $("status").addEventListener("click", (e) => { if (e.target.id === "skip") skipPlacing(); });
   $("again").onclick = () => { g.phase = "setup"; g.world = null; g.players.forEach((p) => (p.score = 0)); show("panel-setup"); status("Set up a new game"); hud(); };
   buildSetup(2);
 
@@ -422,6 +485,12 @@
     S.line(ctx, w.tee.x + 8, w.tee.y - 8, w.tee.x - 8, w.tee.y + 8, { width: 2.5, seed: 12 });
     S.text(ctx, "tee", w.tee.x, w.tee.y + 26, { size: 20, color: "#5d5960", tilt: -4 });
 
+    // scorch marks left by bombs: pencil smudges that stay on the page
+    for (const sc of w.scorches || []) {
+      S.hatch(ctx, (c) => c.arc(sc.x, sc.y, 46, 0, Math.PI * 2), [sc.x - 50, sc.y - 50, sc.x + 50, sc.y + 50], { gap: 6, alpha: 0.18, width: 2 });
+      S.circle(ctx, sc.x, sc.y, 44, { width: 1.5, alpha: 0.2, passes: 1, wobble: 0.15, seed: sc.seed });
+    }
+
     // traps, each labelled with its owner's name in their pen colour
     for (const t of w.traps) {
       T.types[t.type].draw(ctx, t);
@@ -434,10 +503,19 @@
     S.circle(ctx, h.x, h.y, P.HOLE_R, { fill: "#262123", width: 2.5, seed: 21, wobble: 0.08 });
     S.line(ctx, h.x, h.y, h.x, h.y - 64, { width: 3, seed: 22 });
     S.poly(ctx, [[h.x, h.y - 64], [h.x + 36, h.y - 53 + flap], [h.x, h.y - 42]], { fill: "#ff8f8f", width: 2.5, seed: 23 });
-    S.text(ctx, String(g.holeNo + 1), h.x + 12, h.y - 53 + flap / 2, { size: 16 });
+    S.text(ctx, String(g.mapNo + 1), h.x + 12, h.y - 53 + flap / 2, { size: 16 });
 
     // ghost of the trap being placed
-    if (g.phase === "trap-place" && g.pointer) {
+    if (g.phase === "trap-place" && g.pointer && T.types[g.placing.type].isBomb) {
+      // bomb: show the blast circle and cross out everything it would destroy
+      const { x, y } = g.pointer, R = T.types.bomb.radius;
+      for (let a = 0; a < Math.PI * 2; a += 0.35) S.line(ctx, x + Math.cos(a) * R, y + Math.sin(a) * R, x + Math.cos(a + 0.18) * R, y + Math.sin(a + 0.18) * R, { color: "#d63b3b", width: 2.5, passes: 1, seed: a * 10 });
+      for (const t of w.traps) if (T.inBlast(t, x, y)) {
+        S.line(ctx, t.x - 18, t.y - 18, t.x + 18, t.y + 18, { color: "#d63b3b", width: 4, seed: 33 });
+        S.line(ctx, t.x + 18, t.y - 18, t.x - 18, t.y + 18, { color: "#d63b3b", width: 4, seed: 34 });
+      }
+      T.types.bomb.draw(ctx, { x, y, seed: 35 });
+    } else if (g.phase === "trap-place" && g.pointer) {
       const t = { ...g.placing, x: g.pointer.x, y: g.pointer.y };
       const ok = L.canPlace(w, t);
       ctx.save(); ctx.globalAlpha = ok ? 0.6 : 0.3; T.types[t.type].draw(ctx, t); ctx.restore();
@@ -457,6 +535,28 @@
     }
 
     if (g.phase === "putt" && g.drag && g.pointer) drawAim();
+    if (g.blast) drawBlast(now);
+  }
+
+  /** A scribbled explosion: three held drawings (spark → big burst → smoke puffs). */
+  function drawBlast(now) {
+    const t = now - g.blast.start, { x, y } = g.blast;
+    if (t > 700) { g.blast = null; return; }
+    const frame = t < 120 ? 0 : t < 380 ? 1 : 2;
+    const R = [40, 105, 80][frame], spikes = 12;
+    if (frame < 2) {
+      const pts = [];
+      for (let i = 0; i < spikes * 2; i++) {
+        const a = (i / (spikes * 2)) * Math.PI * 2, r = i % 2 ? R * 0.55 : R;
+        pts.push([x + Math.cos(a) * r, y + Math.sin(a) * r]);
+      }
+      S.poly(ctx, pts, { fill: frame ? "#ffb347" : "#fff06a", width: 3, seed: 70 + frame });
+      if (frame) S.poly(ctx, pts.map(([px, py]) => [x + (px - x) * 0.5, y + (py - y) * 0.5]), { fill: "#fff06a", width: 2, seed: 72 });
+      S.text(ctx, "BOOM!", x, y, { size: frame ? 46 : 30, font: "'Rock Salt', cursive", weight: 400, color: "#d63b3b", tilt: -8 });
+    } else {
+      [[-40, -20, 26], [30, -34, 22], [10, 30, 30], [-30, 34, 18], [48, 18, 20]].forEach(([dx, dy, r], i) =>
+        S.circle(ctx, x + dx, y + dy, r, { fill: "#e5e1d8", fillAlpha: 0.8, width: 2, alpha: 0.7, seed: 80 + i }));
+    }
   }
 
   /** The current player's golfer: aiming, swinging, or watching their shot. */
@@ -557,7 +657,7 @@
   if (/[?&]demo\b/.test(location.search)) {
     g.players = ["Alfie", "Sam", "Jo"].map((name, i) => ({ name, color: COLORS[i], score: [4, 2, 5][i],
       look: [{ hair: 0, face: 5, shirt: 2, trousers: 2, club: 1 }, { hair: 4, face: 1, shirt: 1, trousers: 0, club: 2 }, { hair: 6, face: 4, shirt: 4, trousers: 3, club: 3 }][i] }));
-    g.holeList = [2, 1, 0]; g.holeNo = 0; g.world = L.world(2);
+    g.mapList = [2, 1, 0]; g.mapNo = 0; g.round = 3; g.world = L.world(2); g.world.scorches = [{ x: 560, y: 150, seed: 2 }];
     g.world.traps = [
       { type: "ink", x: 330, y: 140, owner: 1, seed: 3, angle: 0 },
       { type: "spring", x: 700, y: 470, owner: 2, seed: 4, angle: 0 },
